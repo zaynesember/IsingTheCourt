@@ -1,8 +1,11 @@
 import numpy as np
 import csv
 
+#TODO: Add other courts
 class DataReader:
    
+    #Takes in existing array of votes for an individual case and direction of a vote and transforms then
+    #appends it to array
     def directionCheck(caseVotes, direction):
         #Conservative vote
         if(direction == "1"): return np.append(caseVotes,-1.)
@@ -11,9 +14,7 @@ class DataReader:
         #No direction
         else: return np.append(caseVotes,0.)
         
-    #TODO: Add other courts
-    #1994-2005
-    #First case is 1994-053, last is 2004-080
+    #Scrapes vote data for the Rehnquist Court from 1994 to 2005
     def getRehnquist():
         
         allVotes = np.array([None,None,None,None,None,None,None,None,None])
@@ -43,33 +44,29 @@ class DataReader:
                 
                     #Check to ensure we're in the Rehnquist court era (with continuity of justices)
                     if(caseIDint >= 1994053 and caseIDint <= 2004080):
-                        print("Current case ID: ", caseIDint)
-                        #print("Previous case ID: ", prevCaseID)
+                    
                         if(prevCaseID == caseIDint or prevCaseID == -1):
                             
                             #Note this is using the 'direction' column where votes are categorized by ideology, other measures may be better
-                            direction = row[58]
+                            direction = row[57]
                             #Append the transformed vote direction to the array
                             caseVotes = DataReader.directionCheck(caseVotes, direction)
 
                         else: 
-                            print("All votes: ",allVotes)
-                            print("Case votes: ",caseVotes)
-                            print("All votes shape: ",allVotes.shape)
-                            print("Case votes shape: ",caseVotes.shape)
-                            #print("Current case ID: ", caseIDint)
+                            #Check for oddball cases where not all justices voted and ignore them
                             if(caseVotes.size == 9):
                                 allVotes = np.concatenate([allVotes.reshape(-1,9), caseVotes.reshape(-1,9)],axis=0)
                                 caseVotes = np.array([])
                             
-                            direction = row[58]
+                            direction = row[57]
                             caseVotes = DataReader.directionCheck(caseVotes, direction)
 
                         prevCaseID = caseIDint
                     
                 idx+=1
-                
-            return allVotes 
+            
+            #Slice off first row of Nones
+            return allVotes[1:] 
         
     
     
