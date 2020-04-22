@@ -49,7 +49,9 @@ protected :
   double J;                       // ferromagnetic coupling
   int L, Lx, Ly;                  // number of spins in x and y
   int N;                          // number of spins
-  matrix_itype s;                 // the spins
+// 2D
+//  matrix_itype s;                 // the spins
+  std::vector<int> s;
   double T;                       // temperature
   double H;                       // magnetic field
 

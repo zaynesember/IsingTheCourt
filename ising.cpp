@@ -2,16 +2,32 @@
 #include "ising.h"
 
 
+// 2D
+// Ising::Ising(double iJ, int iL, int iN, double iT, double iH) :
+//   rd(), gen(rd()), dis(0,1.),
+//   J(iJ), L(iL), Lx(L), Ly(L), N(iN), T(iT), H(iH)
+// {
+//   s.resize(Lx);
+//   for (int i = 0; i < Lx; i++){
+//     s[i].resize(Ly);
+//     for (int j = 0; j < Ly; j++)
+//       s[i][j] =  dis(gen) < 0.5 ? +1 : -1;   // hot start
+//   }
+//   compute_boltzmann_factors();
+//   steps = 0;
 
+//   reset_averages();
+// }
+
+
+//1D
 Ising::Ising(double iJ, int iL, int iN, double iT, double iH) :
   rd(), gen(rd()), dis(0,1.),
-  J(iJ), L(iL), Lx(L), Ly(L), N(iN), T(iT), H(iH)
+  J(iJ), L(iL), N(iN), T(iT), H(iH)
 {
-  s.resize(Lx);
-  for (int i = 0; i < Lx; i++){
-    s[i].resize(Ly);
-    for (int j = 0; j < Ly; j++)
-      s[i][j] =  dis(gen) < 0.5 ? +1 : -1;   // hot start
+  s.resize(L);
+  for (int i = 0; i < L; i++){
+      s[i] =  dis(gen) < 0.5 ? +1 : -1;   // hot start
   }
   compute_boltzmann_factors();
   steps = 0;
@@ -37,26 +53,49 @@ void Ising::compute_boltzmann_factors()
   }
 }
 
+//2D
+// bool Ising::metropolis_step()
+// {
+//   // choose a random spin
+//   int i = int(Lx * dis(gen));
+//   int j = int(Ly * dis(gen));
+
+//   // find its neighbors using periodic boundary conditions
+//   int iPrev = i == 0 ? Lx-1 : i-1;
+//   int iNext = i == Lx-1 ? 0 : i+1;
+//   int jPrev = j == 0 ? Ly-1 : j-1;
+//   int jNext = j == Ly-1 ? 0 : j+1;
+
+//   // find sum of neighbors
+//   int sumNeighbors = s[iPrev][j] + s[iNext][j] + s[i][jPrev] + s[i][jNext];
+//   int delta_ss = 2*s[i][j]*sumNeighbors;
+
+//   // ratio of Boltzmann factors
+//   double ratio = w[delta_ss+8][1+s[i][j]];
+//   if (dis(gen) < ratio) {
+//     s[i][j] = -s[i][j];
+//     return true;
+//   } else return false;
+// }
+
+//1D
 bool Ising::metropolis_step()
 {
   // choose a random spin
-  int i = int(Lx * dis(gen));
-  int j = int(Ly * dis(gen));
+  int i = int(L * dis(gen));
 
   // find its neighbors using periodic boundary conditions
-  int iPrev = i == 0 ? Lx-1 : i-1;
-  int iNext = i == Lx-1 ? 0 : i+1;
-  int jPrev = j == 0 ? Ly-1 : j-1;
-  int jNext = j == Ly-1 ? 0 : j+1;
+  int iPrev = i == 0 ? L-1 : i-1;
+  int iNext = i == L-1 ? 0 : i+1;
 
   // find sum of neighbors
-  int sumNeighbors = s[iPrev][j] + s[iNext][j] + s[i][jPrev] + s[i][jNext];
-  int delta_ss = 2*s[i][j]*sumNeighbors;
+  int sumNeighbors = s[iPrev] + s[iNext];
+  int delta_ss = 2*s[i]*sumNeighbors; //MAY NEED TO REMOVE THE 2
 
   // ratio of Boltzmann factors
-  double ratio = w[delta_ss+8][1+s[i][j]];
+  double ratio = w[delta_ss+8][1+s[i]];
   if (dis(gen) < ratio) {
-    s[i][j] = -s[i][j];
+    s[i] = -s[i];
     return true;
   } else return false;
 }
@@ -70,23 +109,46 @@ void Ising::one_monte_carlo_step_per_spin ( ) {
   ++steps;
 }
 
+//2D
+// double Ising::magnetizationPerSpin ( ) {
+//   int sSum = 0;
+//   for (int i = 0; i < Lx; i++)
+//     for (int j = 0; j < Ly; j++) {
+//       sSum += s[i][j];
+//     }
+//   return sSum / double(N);
+// }
+
+//1D
 double Ising::magnetizationPerSpin ( ) {
   int sSum = 0;
-  for (int i = 0; i < Lx; i++)
-    for (int j = 0; j < Ly; j++) {
-      sSum += s[i][j];
+  for (int i = 0; i < L; i++){
+     sSum += s[i];
     }
   return sSum / double(N);
 }
 
+
+//2D
+// double Ising::energyPerSpin ( ) {
+//   int sSum = 0, ssSum = 0;
+//   for (int i = 0; i < Lx; i++)
+//     for (int j = 0; j < Ly; j++) {
+//       sSum += s[i][j];
+//       int iNext = i == Lx-1 ? 0 : i+1;
+//       int jNext = j == Ly-1 ? 0 : j+1;
+//       ssSum += s[i][j]*(s[iNext][j] + s[i][jNext]);
+//     }
+//   return -(J*ssSum + H*sSum)/N;
+// }
+
+//1D
 double Ising::energyPerSpin ( ) {
   int sSum = 0, ssSum = 0;
-  for (int i = 0; i < Lx; i++)
-    for (int j = 0; j < Ly; j++) {
-      sSum += s[i][j];
-      int iNext = i == Lx-1 ? 0 : i+1;
-      int jNext = j == Ly-1 ? 0 : j+1;
-      ssSum += s[i][j]*(s[iNext][j] + s[i][jNext]);
+  for (int i = 0; i < L; i++){
+      sSum += s[i];
+      int iNext = i == L-1 ? 0 : i+1;
+      ssSum += s[i]*(s[iNext] + s[i]);
     }
   return -(J*ssSum + H*sSum)/N;
 }
